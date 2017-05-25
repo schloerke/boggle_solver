@@ -10,6 +10,8 @@
 
 <body>
 
+  <h1>Boggle Solver: Barret Schloerke</h1>
+
   <select id="boggle_size" onchange="update_size()">
     <option value="4">4</option>
     <option value="5">5</option>
@@ -32,6 +34,15 @@ wdgn</textarea>
 
 
 <div id="output"></div>
+
+<br />
+<h4>Approach</h4>
+<div>
+<p>Due to rapidly increasing complexity by checking if a word exists in in the dictionary, <br/>
+  it is faster to check if each dictionary word exists instead.</p>
+<p>For every word... Once a starting position is found, the nearest 8 neighbors are checked (if valid) <br />
+for the next letter.  Repeat this checking until the word is found or not able to be found.</p>
+</div>
 
   <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
 
