@@ -1,0 +1,220 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Boggle Solver</title>
+
+</head>
+
+<body>
+
+  <textarea id="boggle_input" rows="4" cols="4" disabled="1" >aexx
+pyly
+zpzz
+wwww</textarea>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+
+  <script>
+
+  // https://stackoverflow.com/questions/4459928/how-to-deep-clone-in-javascript
+  var snapshot = function(obj) {
+    if(obj == null || typeof(obj) != 'object') {
+      return obj;
+    }
+
+    var temp = new obj.constructor();
+
+    for(var key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        temp[key] = snapshot(obj[key]);
+      }
+    }
+
+    return temp;
+  }
+
+    var words = undefined
+
+    var get_input = function() {
+      var chars = $("#boggle_input").text()
+      var n = 4
+
+      var board = new Array(n)
+      for (var i = 0; i < n; i++) {
+        new_line_pos = chars.indexOf("\n")
+        if (new_line_pos == -1) {
+          if (i < n - 1) {
+            alert("must include " + n + " lines of input text")
+            return(undefined)
+          }
+          // last row
+          board_chars = boggle_split(chars)
+        } else {
+          // not last row
+          board_chars = boggle_split(chars.substring(0, new_line_pos))
+          // subset the chars for next line
+          chars = chars.substring(new_line_pos + 1)
+        }
+        if (board_chars.length != n) {
+          alert("row: " + i + " does not have " + n + " boggle characters")
+          return(undefined)
+        }
+        board[i] = board_chars
+
+      }
+
+      return(board)
+    }
+
+
+
+    var solve_boggle = function(board, words) {
+      var n = Math.sqrt(board.length)
+
+
+      var new_seen = function() {
+        seen = new Array(n)
+
+        for(var i = 0; i < n; i++) {
+          seen[i] = new Array(n)
+          seen[i].fill(false)
+        }
+        return(seen)
+      }
+
+      var found = []
+
+
+      var contains_word = function(i, j, word_chars, seen) {
+        seen[i][j] = true
+
+        // console.log("trying: ", i,j, word_chars, seen, board)
+
+        // for three next left/right
+        for (next_i = i - 1; next_i <= i + 1; next_i++) {
+          if (next_i < 0 || next_i >= n) continue
+
+          // for three next bottom/top
+          for (next_j = j - 1; next_j <= j + 1; next_j++) {
+
+            // console.log("attempt: ", next_i, next_j)
+
+            // check bounds
+            if (next_j < 0 || next_j >= n) continue
+            if (next_i == i && next_j == j) continue
+
+            // check if seen
+            if (seen[next_i][next_j]) continue
+
+            // if next char matches
+            if (board[next_i][next_j] != word_chars[0]) continue
+
+            if (word_chars.length == 1) {
+              // found last match
+              return(true)
+            }
+
+            // does match
+            var next_seen = snapshot(seen)
+            var next_word_chars = snapshot(word_chars)
+            next_word_chars.shift() // remove first letter
+
+            var next_contains = contains_word(next_i, next_j, next_word_chars, next_seen)
+            if (next_contains) {
+              // found a match recursively return true
+              return(true)
+            } else {
+              // continue working in the loops or fail at end
+            }
+
+          }
+        }
+
+        // couldn't find match
+        return(false)
+      }
+
+
+
+
+      // for each word
+      for (word_i = 0; word_i < words.length; word_i++) {
+        word = words[word_i]
+
+        var does_contain = false
+
+        // for each starting position
+        for (i = 0; i < n && does_contain == false; i++) {
+          for (j = 0; j < n; j++) {
+
+            if (board[i][j] == word[0]) {
+              if (contains_word(i,j, word.slice(1), new_seen())) {
+                does_contain = true
+                break
+              }
+            }
+
+          }
+        }
+
+        if (does_contain) {
+          found.push(word.join(""))
+        }
+
+      }
+
+      return(found)
+    }
+
+    var reg_qu = /qu/
+    var boggle_split = function(word) {
+      var chars = word.split("")
+      if (reg_qu.test(word)) {
+        // found qu and needs to be combined
+        for (i = chars.length - 2; i >= 0; i--) {
+          // if (chars.length )
+          if (chars[i] == "q", chars[i + 1] == "u") {
+            chars.splice(i, 2, "qu")
+          }
+        }
+      }
+      return(chars)
+    }
+
+    do_solve = function() {
+      var board = get_input()
+      console.log(board)
+
+      // var ans = solve_boggle(input, [["a","p","p","l","e"], ["a","p","e"], ["b","a","r","r","e","t"]])
+      var ans = solve_boggle(board, words)
+      console.log(ans)
+
+      if (ans.length > 0) {
+        alert("found! " + ans.join(", "))
+      }
+
+    }
+
+    // https://www.wordgamedictionary.com/sowpods/download/sowpods.txt
+    $.get( "sowpods.txt", function( data ) {
+      words = data.split("\n").slice(6)
+      words = words.filter(function(value) {
+        return((value.length > 2) && value.length <= (4 * 4))
+      }).map(function(value) {
+        return(value.split(""))
+      })
+      // console.log(words.slice(0,6))
+
+      $("#boggle_input").attr("disabled", null).focus()
+
+      do_solve()
+
+    });
+
+
+  </script>
+</body>
+</html>
