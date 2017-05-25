@@ -10,36 +10,36 @@
 
 <body>
 
-  <textarea id="boggle_input" rows="4" cols="4" disabled="1" >aexx
+  <textarea id="boggle_input" rows="4" cols="4" >squid
 pyly
 zpzz
 wwww</textarea>
+
+<br />
+<div id="output"></div>
 
   <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
 
   <script>
 
-  // https://stackoverflow.com/questions/4459928/how-to-deep-clone-in-javascript
-  var snapshot = function(obj) {
-    if(obj == null || typeof(obj) != 'object') {
-      return obj;
-    }
-
-    var temp = new obj.constructor();
-
-    for(var key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        temp[key] = snapshot(obj[key]);
+    // https://stackoverflow.com/questions/4459928/how-to-deep-clone-in-javascript
+    var snapshot = function(obj) {
+      if(obj == null || typeof(obj) != 'object') {
+        return obj;
       }
+      var temp = new obj.constructor();
+      for(var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          temp[key] = snapshot(obj[key]);
+        }
+      }
+      return temp;
     }
-
-    return temp;
-  }
 
     var words = undefined
 
     var get_input = function() {
-      var chars = $("#boggle_input").text()
+      var chars = $("#boggle_input").val()
       var n = 4
 
       var board = new Array(n)
@@ -47,8 +47,7 @@ wwww</textarea>
         new_line_pos = chars.indexOf("\n")
         if (new_line_pos == -1) {
           if (i < n - 1) {
-            alert("must include " + n + " lines of input text")
-            return(undefined)
+            return("must include " + n + " lines of input text")
           }
           // last row
           board_chars = boggle_split(chars)
@@ -59,8 +58,7 @@ wwww</textarea>
           chars = chars.substring(new_line_pos + 1)
         }
         if (board_chars.length != n) {
-          alert("row: " + i + " does not have " + n + " boggle characters")
-          return(undefined)
+          return("row: " + (i + 1) + " has " + board_chars.length + " boggle characters. Needs " + n + " boggle characters")
         }
         board[i] = board_chars
 
@@ -72,12 +70,10 @@ wwww</textarea>
 
 
     var solve_boggle = function(board, words) {
-      var n = Math.sqrt(board.length)
-
+      var n = board.length
 
       var new_seen = function() {
         seen = new Array(n)
-
         for(var i = 0; i < n; i++) {
           seen[i] = new Array(n)
           seen[i].fill(false)
@@ -88,10 +84,10 @@ wwww</textarea>
       var found = []
 
 
-      var contains_word = function(i, j, word_chars, seen) {
+      var contains_word = function(i, j, word_chars, seen, verbose) {
         seen[i][j] = true
 
-        // console.log("trying: ", i,j, word_chars, seen, board)
+        if (verbose) console.log("trying: ", i,j, word_chars, seen, board)
 
         // for three next left/right
         for (next_i = i - 1; next_i <= i + 1; next_i++) {
@@ -100,7 +96,7 @@ wwww</textarea>
           // for three next bottom/top
           for (next_j = j - 1; next_j <= j + 1; next_j++) {
 
-            // console.log("attempt: ", next_i, next_j)
+            if (verbose) console.log("attempt: ", next_i, next_j)
 
             // check bounds
             if (next_j < 0 || next_j >= n) continue
@@ -138,12 +134,12 @@ wwww</textarea>
       }
 
 
-
-
       // for each word
       for (word_i = 0; word_i < words.length; word_i++) {
         word = words[word_i]
 
+        // verbose = word.join("") == "squid"
+        verbose = false
         var does_contain = false
 
         // for each starting position
@@ -151,7 +147,7 @@ wwww</textarea>
           for (j = 0; j < n; j++) {
 
             if (board[i][j] == word[0]) {
-              if (contains_word(i,j, word.slice(1), new_seen())) {
+              if (contains_word(i,j, word.slice(1), new_seen(), verbose)) {
                 does_contain = true
                 break
               }
@@ -186,15 +182,81 @@ wwww</textarea>
 
     do_solve = function() {
       var board = get_input()
+      if (typeof board == "string") {
+        $("#output").text(board)
+        return
+      }
       console.log(board)
 
-      // var ans = solve_boggle(input, [["a","p","p","l","e"], ["a","p","e"], ["b","a","r","r","e","t"]])
-      var ans = solve_boggle(board, words)
-      console.log(ans)
+      $("#output").text("thinking....")
 
-      if (ans.length > 0) {
-        alert("found! " + ans.join(", "))
+      // var ans = solve_boggle(input, [["a","p","p","l","e"], ["a","p","e"], ["b","a","r","r","e","t"]])
+      var start_time = new Date()
+      var ans = solve_boggle(board, words)
+      total_milli = new Date() - start_time
+
+      // var ans = solve_boggle(board, [["s","qu","i","d"]])
+
+      // if nothing is found, return
+      if (ans.length == 0) {
+        $("#output").text("no results found in " + total_milli + "ms")
+        return
       }
+
+      // get the lengths of each answer for reporting
+      var ans_lengths = ans.map(function(x) { return(x.length) })
+      var max_length = Math.max.apply(null, ans_lengths)
+      var i
+
+      ans_arr = new Array(max_length)
+      for (i = 0; i < max_length; i++) {
+        ans_arr[i] = new Array()
+      }
+
+      // put in same length arrs
+      for (var i = 0; i < ans.length; i++) {
+        ans_arr[ans_lengths[i] - 1].push(ans[i])
+      }
+
+      var txt_arr = []
+      for (i = 3 - 1; i < ans_arr.length; i++) {
+        if (ans_arr[i].length > 0) {
+          txt_arr.push(
+            (i + 1) + " - " + ans_arr[i].join(" ")
+          )
+        }
+      }
+
+      var total_points = 0
+      for (i = 3 - 1; i < ans_arr.length; i++) {
+        switch(i + 1) {
+          case 3:
+          case 4:
+            total_points += 1 * ans_arr[i].length
+            break
+          case 5:
+            total_points += 2 * ans_arr[i].length
+            break
+          case 6:
+            total_points += 3 * ans_arr[i].length
+            break
+          case 7:
+            total_points += 5 * ans_arr[i].length
+            break
+          default:
+            total_points += 5 * ans_arr[i].length
+            break
+        }
+      }
+
+
+
+      // output the text
+      $("#output").html(
+        "found in " + total_milli + "ms<br/>" +
+        txt_arr.join("<br />") + "<br/>" +
+        "total points: " + total_points
+      )
 
     }
 
@@ -204,13 +266,14 @@ wwww</textarea>
       words = words.filter(function(value) {
         return((value.length > 2) && value.length <= (4 * 4))
       }).map(function(value) {
-        return(value.split(""))
+        return(boggle_split(value))
       })
       // console.log(words.slice(0,6))
 
+      $("#boggle_input").attr("onkeyup", "do_solve()")
       $("#boggle_input").attr("disabled", null).focus()
 
-      do_solve()
+      // do_solve()
 
     });
 
