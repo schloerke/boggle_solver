@@ -312,8 +312,7 @@ wdgn</textarea>
 
     // dictionary from
     // https://www.wordgamedictionary.com/sowpods/download/sowpods.txt
-    // $.get( "sowpods.txt", function( data ) {
-    $.get( "https://www.wordgamedictionary.com/sowpods/download/sowpods.txt", function( data ) {
+    $.get( "sowpods.txt", function( data ) {
       // remove the header
       words = data.split("\n").slice(6)
       // split all words into boggle splits
