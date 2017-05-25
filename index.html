@@ -19,20 +19,25 @@
     <option value="9">9</option>
     <option value="10">10</option>
   </select>
+  <button type="button" onclick="randomize()">randomize</button>
+
   <br />
 
   <textarea id="boggle_input" rows="4" cols="4"  onchange="do_solve()">squid
-pyly
-zpzz
-wwww</textarea>
+abds
+peai
+wdgn</textarea>
 
 <br />
+
+
 <div id="output"></div>
 
   <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
 
   <script>
 
+    // deep clone
     // https://stackoverflow.com/questions/4459928/how-to-deep-clone-in-javascript
     var snapshot = function(obj) {
       if(obj == null || typeof(obj) != 'object') {
@@ -47,16 +52,35 @@ wwww</textarea>
       return temp;
     }
 
+
     var words = undefined
 
+    var n = 4
+    update_size = function() {
+      new_n = $("#boggle_size").val()
+      $("#boggle_input").attr("rows", new_n).attr("cols", new_n)
+      n = parseInt(new_n, 10)
+      do_solve()
+    }
+
+
+    // get boggle input matrix or character error
     var get_input = function() {
       var chars = $("#boggle_input").val()
+      if (/[A-Z]/.test(chars)) {
+        chars = chars.toLowerCase()
+        $("#boggle_input").val(chars)
+      }
+      if (/[^a-z\n]/.test(chars)) {
+        return("use only characters and new lines")
+      }
 
       var board = new Array(n)
       for (var i = 0; i < n; i++) {
         new_line_pos = chars.indexOf("\n")
         if (new_line_pos == -1) {
           if (i < n - 1) {
+            // not enough lines
             return("must include " + n + " lines of input text")
           }
           // last row
@@ -68,6 +92,7 @@ wwww</textarea>
           chars = chars.substring(new_line_pos + 1)
         }
         if (board_chars.length != n) {
+          // not enough characters
           return("row: " + (i + 1) + " has " + board_chars.length + " boggle characters. Needs " + n + " boggle characters")
         }
         board[i] = board_chars
@@ -77,8 +102,23 @@ wwww</textarea>
       return(board)
     }
 
+    randomize = function() {
+      var ans = ""
+      var alphabet = "abcdefghijklmnopqrstuvwxyz"
+
+      for (var i = 0; i < n*n; i++) {
+        ans += alphabet[Math.floor(Math.random() * alphabet.length)];
+        if ((i + 1) % n == 0) {
+          ans += "\n"
+        }
+
+      }
+      $("#boggle_input").val(ans)
+      do_solve()
+    }
 
 
+    // solve boggle for a particular set of words.
     var solve_boggle = function(board, words) {
       var new_seen = function() {
         seen = new Array(n)
@@ -188,14 +228,6 @@ wwww</textarea>
       return(chars)
     }
 
-    var n = 4
-    update_size = function() {
-      new_n = $("#boggle_size").val()
-      $("#boggle_input").attr("rows", new_n).attr("cols", new_n)
-      n = parseInt(new_n, 10)
-      do_solve()
-    }
-
     do_solve = function() {
       var board = get_input()
       if (typeof board == "string") {
@@ -235,15 +267,17 @@ wwww</textarea>
           ans_arr[ans_lengths[i] - 1].push(ans[i])
         }
 
+        // make output array of found words
         var txt_arr = []
         for (i = 3 - 1; i < ans_arr.length; i++) {
           if (ans_arr[i].length > 0) {
             txt_arr.push(
-              (i + 1) + " - " + ans_arr[i].join(" ")
+              (i + 1) + " - (" + ans_arr[i].length + ") " + ans_arr[i].join(" ")
             )
           }
         }
 
+        // find total points
         var total_points = 0
         for (i = 3 - 1; i < ans_arr.length; i++) {
           switch(i + 1) {
@@ -276,9 +310,13 @@ wwww</textarea>
 
     }
 
+    // dictionary from
     // https://www.wordgamedictionary.com/sowpods/download/sowpods.txt
-    $.get( "sowpods.txt", function( data ) {
+    // $.get( "sowpods.txt", function( data ) {
+    $.get( "https://www.wordgamedictionary.com/sowpods/download/sowpods.txt", function( data ) {
+      // remove the header
       words = data.split("\n").slice(6)
+      // split all words into boggle splits
       words = words.filter(function(value) {
         return((value.length > 2))
       }).map(function(value) {
@@ -289,7 +327,7 @@ wwww</textarea>
       $("#boggle_input").attr("onkeyup", "do_solve()")
       $("#boggle_input").attr("disabled", null).focus()
 
-      // solve the initial
+      // solve the initial setup
       do_solve()
     });
 
