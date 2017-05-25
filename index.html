@@ -115,7 +115,7 @@ for the next letter.  Repeat this checking until the word is found or not able t
 
     randomize = function() {
       var ans = ""
-      var alphabet = "abcdefghijklmnopqrstuvwxyz"
+      var alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "qu", "r", "s", "t", "v", "w", "x", "y", "z"]
 
       for (var i = 0; i < n*n; i++) {
         ans += alphabet[Math.floor(Math.random() * alphabet.length)];
