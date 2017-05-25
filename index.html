@@ -10,7 +10,18 @@
 
 <body>
 
-  <textarea id="boggle_input" rows="4" cols="4" >squid
+  <select id="boggle_size" onchange="update_size()">
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+  </select>
+  <br />
+
+  <textarea id="boggle_input" rows="4" cols="4"  onchange="do_solve()">squid
 pyly
 zpzz
 wwww</textarea>
@@ -40,7 +51,6 @@ wwww</textarea>
 
     var get_input = function() {
       var chars = $("#boggle_input").val()
-      var n = 4
 
       var board = new Array(n)
       for (var i = 0; i < n; i++) {
@@ -70,8 +80,6 @@ wwww</textarea>
 
 
     var solve_boggle = function(board, words) {
-      var n = board.length
-
       var new_seen = function() {
         seen = new Array(n)
         for(var i = 0; i < n; i++) {
@@ -180,6 +188,14 @@ wwww</textarea>
       return(chars)
     }
 
+    var n = 4
+    update_size = function() {
+      new_n = $("#boggle_size").val()
+      $("#boggle_input").attr("rows", new_n).attr("cols", new_n)
+      n = parseInt(new_n, 10)
+      do_solve()
+    }
+
     do_solve = function() {
       var board = get_input()
       if (typeof board == "string") {
@@ -190,73 +206,73 @@ wwww</textarea>
 
       $("#output").text("thinking....")
 
-      // var ans = solve_boggle(input, [["a","p","p","l","e"], ["a","p","e"], ["b","a","r","r","e","t"]])
-      var start_time = new Date()
-      var ans = solve_boggle(board, words)
-      total_milli = new Date() - start_time
+      setTimeout(function() {
+        // var ans = solve_boggle(input, [["a","p","p","l","e"], ["a","p","e"], ["b","a","r","r","e","t"]])
+        var start_time = new Date()
+        var ans = solve_boggle(board, words)
+        total_milli = new Date() - start_time
 
-      // var ans = solve_boggle(board, [["s","qu","i","d"]])
+        // var ans = solve_boggle(board, [["s","qu","i","d"]])
 
-      // if nothing is found, return
-      if (ans.length == 0) {
-        $("#output").text("no results found in " + total_milli + "ms")
-        return
-      }
-
-      // get the lengths of each answer for reporting
-      var ans_lengths = ans.map(function(x) { return(x.length) })
-      var max_length = Math.max.apply(null, ans_lengths)
-      var i
-
-      ans_arr = new Array(max_length)
-      for (i = 0; i < max_length; i++) {
-        ans_arr[i] = new Array()
-      }
-
-      // put in same length arrs
-      for (var i = 0; i < ans.length; i++) {
-        ans_arr[ans_lengths[i] - 1].push(ans[i])
-      }
-
-      var txt_arr = []
-      for (i = 3 - 1; i < ans_arr.length; i++) {
-        if (ans_arr[i].length > 0) {
-          txt_arr.push(
-            (i + 1) + " - " + ans_arr[i].join(" ")
-          )
+        // if nothing is found, return
+        if (ans.length == 0) {
+          $("#output").text("no results found in " + total_milli + "ms")
+          return
         }
-      }
 
-      var total_points = 0
-      for (i = 3 - 1; i < ans_arr.length; i++) {
-        switch(i + 1) {
-          case 3:
-          case 4:
-            total_points += 1 * ans_arr[i].length
-            break
-          case 5:
-            total_points += 2 * ans_arr[i].length
-            break
-          case 6:
-            total_points += 3 * ans_arr[i].length
-            break
-          case 7:
-            total_points += 5 * ans_arr[i].length
-            break
-          default:
-            total_points += 5 * ans_arr[i].length
-            break
+        // get the lengths of each answer for reporting
+        var ans_lengths = ans.map(function(x) { return(x.length) })
+        var max_length = Math.max.apply(null, ans_lengths)
+        var i
+
+        ans_arr = new Array(max_length)
+        for (i = 0; i < max_length; i++) {
+          ans_arr[i] = new Array()
         }
-      }
 
+        // put in same length arrs
+        for (var i = 0; i < ans.length; i++) {
+          ans_arr[ans_lengths[i] - 1].push(ans[i])
+        }
 
+        var txt_arr = []
+        for (i = 3 - 1; i < ans_arr.length; i++) {
+          if (ans_arr[i].length > 0) {
+            txt_arr.push(
+              (i + 1) + " - " + ans_arr[i].join(" ")
+            )
+          }
+        }
 
-      // output the text
-      $("#output").html(
-        "found in " + total_milli + "ms<br/>" +
-        txt_arr.join("<br />") + "<br/>" +
-        "total points: " + total_points
-      )
+        var total_points = 0
+        for (i = 3 - 1; i < ans_arr.length; i++) {
+          switch(i + 1) {
+            case 3:
+            case 4:
+              total_points += 1 * ans_arr[i].length
+              break
+            case 5:
+              total_points += 2 * ans_arr[i].length
+              break
+            case 6:
+              total_points += 3 * ans_arr[i].length
+              break
+            case 7:
+              total_points += 5 * ans_arr[i].length
+              break
+            default:
+              total_points += 5 * ans_arr[i].length
+              break
+          }
+        }
+
+        // output the text
+        $("#output").html(
+          "found in " + total_milli + "ms<br/>" +
+          txt_arr.join("<br />") + "<br/>" +
+          "total points: " + total_points
+        )
+      }, 0)
 
     }
 
@@ -264,17 +280,17 @@ wwww</textarea>
     $.get( "sowpods.txt", function( data ) {
       words = data.split("\n").slice(6)
       words = words.filter(function(value) {
-        return((value.length > 2) && value.length <= (4 * 4))
+        return((value.length > 2))
       }).map(function(value) {
         return(boggle_split(value))
       })
-      // console.log(words.slice(0,6))
 
+      // have the values change on key up
       $("#boggle_input").attr("onkeyup", "do_solve()")
       $("#boggle_input").attr("disabled", null).focus()
 
-      // do_solve()
-
+      // solve the initial
+      do_solve()
     });
 
 
